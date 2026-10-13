@@ -31,6 +31,9 @@ def line_gap_candidates(pdf_path, max_lines=2000, max_pairs=100000):
                                      "segment": [p1.x,p1.y,p2.x,p2.y]})
                     if len(segments) > max_lines:
                         raise ValueError("Line limit exceeded")
+            total_pairs = len(segments) * (len(segments) - 1) // 2
+            if total_pairs > max_pairs:
+                raise ValueError("Pair limit exceeded")
             pairs = []
             attempted = 0
             for i, first in enumerate(segments):
