@@ -10,12 +10,14 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from .v02 import IntentError, compile_intent, wall_segments
+from .review_gate import require_no_unsafe_intersections
 
 def _near(a, b, tolerance=1e-6):
     return math.isclose(a, b, rel_tol=0, abs_tol=tolerance)
 
 def export_plan(spec, destination):
     compiled = compile_intent(spec)
+    findings = require_no_unsafe_intersections(spec)
     segments = wall_segments(spec)
     if not segments:
         raise IntentError("No drawable wall segments")
@@ -79,6 +81,7 @@ def export_plan(spec, destination):
         "units":"mm",
         "input_sha256":hashlib.sha256(canonical).hexdigest(),
         "wall_count":len(compiled["walls"]),
+        "intersection_findings":findings,
         "opening_count":len(compiled["openings"]),
         "segment_count":len(segments),
         "drawn_length_mm":round(drawn,6),
