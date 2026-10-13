@@ -34,3 +34,7 @@ def test_rejects_hash_continuation_with_invalid_digest():
 
 def test_rejects_extra_option_in_continuation():
     assert module.validate("sample==1.2.3 \\\n    --index-url=https://example.invalid/simple\n")
+
+def test_accepts_pip_tools_environment_marker():
+    candidate = 'tomli==2.5.0 ; python_version < "3.11" \\\n    --hash=sha256:' + 'a' * 64 + '\n'
+    assert module.validate(candidate) == []
