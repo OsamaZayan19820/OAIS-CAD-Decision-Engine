@@ -30,6 +30,7 @@ def render(spec):
         coords = " ".join("%.3f,%.3f" % mapped(p) for p in poly)
         ET.SubElement(svg,"polygon",{"points":coords,"fill":"#285782","stroke":"#153b60"})
     label(465,"Walls: %d | Openings: %d | Strips: %d" % (len(model["walls"]),len(model["openings"]),len(polygons)))
+    label(435,"Opening details: " + "; ".join("%s %s %g mm" % (o["id"],o["type"],o["width"]) for o in model["openings"])[:110])
     status = "HOLD: OVERLAPPING STRIPS" if any(f["severity"]=="HOLD" for f in result["findings"]) else "REVIEW ONLY: NOT AN ENGINEERING APPROVAL"
     label(500,status,"#a34d14")
     return ET.tostring(svg,encoding="unicode")
