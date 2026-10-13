@@ -1,18 +1,23 @@
-# V0.2 directory publication gate
+# V0.2 exclusive-reservation publication gate
 
-The optional `publish_solid_plan` wrapper stages a complete export
-in a sibling temporary directory and publishes by one directory rename.
+The optional `publish_solid_plan` wrapper first validates DXF in a
+temporary directory. It then exclusively reserves the final directory
+using `mkdir`, copies verified artifacts and writes `_OAIS_COMPLETE`
+last. Consumers MUST check this marker AND verify the report and DXF
+SHA-256 before accepting an output as complete.
 
-- Destination must not exist; existing releases are never overwritten.
-- Failed validation leaves no destination or partial release.
-- The DXF exporter still verifies geometry round-trip and records SHA-256.
-- Staging is cleaned up on ordinary Python exceptions.
+- Destination must not exist; an existing release is never overwritten.
+- Concurrent attempts cannot both reserve the same destination on a
+  filesystem with atomic mkdir semantics.
+- A directory may be visible **before** the completion marker exists.
+  Therefore this is **not atomic whole-directory visibility**.
+- A failure after reservation attempts best-effort cleanup.
+- Each file is flushed and fsynced; directory fsync and full crash
+  durability are NOT implemented.
+- On abrupt process termination an incomplete reserved directory may
+  remain and require manual recovery.
+- This module is optional and is not wired to the default CLI.
+- No engineering design approval is conferred.
 
-**Caveats:** Directory rename is atomic only under appropriate local
-filesystem semantics; concurrent writers require an external lock or
-exclusive destination reservation. Abrupt power loss requires durability
-controls (fsync), not supplied here. This is NOT a distributed transaction.
-Do not claim race-free concurrent publication or crash durability.
-
-The wrapper is not integrated into the existing CLI and does not grant
-architectural approval.
+Required future checks: concurrent-process tests, simulated write failure,
+marker-and-hash verification reader, recovery from stale reservations.
