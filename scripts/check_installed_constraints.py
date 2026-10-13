@@ -34,5 +34,5 @@ def check_constraints(project_file=ROOT / "pyproject.toml", get_version=version)
 if __name__ == "__main__":
     failures = check_constraints()
     if failures:
-        print("Dependency constraints failed:\n" + "\n".join(failures), file=sys.stderr)
+        print("Dependency constraints failed:" + chr(10) + chr(10).join(failures), file=sys.stderr)
         sys.exit(1)
