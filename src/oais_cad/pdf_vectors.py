@@ -4,12 +4,12 @@ from .pdf_evidence_gate import EvidenceError, normalize_bbox
 
 
 def extract_vector_evidence(pdf_path, max_paths_per_page=50000):
+    if isinstance(max_paths_per_page, bool) or not isinstance(max_paths_per_page, int) or not 1 <= max_paths_per_page <= 100000:
+        raise EvidenceError("Invalid path limit")
     try:
         import fitz
     except ImportError as exc:
         raise RuntimeError("PyMuPDF required for vector extraction") from exc
-    if isinstance(max_paths_per_page, bool) or not isinstance(max_paths_per_page, int) or not 1 <= max_paths_per_page <= 100000:
-        raise EvidenceError("Invalid path limit")
     pages = []
     with fitz.open(pdf_path) as doc:
         if not doc.is_pdf:
