@@ -33,14 +33,16 @@ def validate(text):
     seen = set()
     for number, entry in logical:
         parts = entry.split()
-        if not parts or not PIN.fullmatch(parts[0]):
+        hash_start = next((i for i, token in enumerate(parts) if token.startswith("--hash=")), len(parts))
+        requirement = " ".join(parts[:hash_start])
+        if not parts or not PIN.fullmatch(requirement):
             errors.append(f"line {number}: package must be exactly pinned")
             continue
-        name = parts[0].split("==", 1)[0].lower().replace("_", "-").replace(".", "-")
+        name = requirement.split("==", 1)[0].lower().replace("_", "-").replace(".", "-")
         if name in seen:
             errors.append(f"line {number}: duplicate package")
         seen.add(name)
-        hashes = parts[1:]
+        hashes = parts[hash_start:]
         if not hashes or any(not HASH.fullmatch(h) for h in hashes):
             errors.append(f"line {number}: missing or invalid SHA-256 hash")
     return errors
