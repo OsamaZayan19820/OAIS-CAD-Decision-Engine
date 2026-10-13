@@ -41,6 +41,13 @@ def verify_release(destination):
                     raise IntentError("Release artifact exceeds size limit")
                 with os.fdopen(fd,"rb",closefd=False) as stream:
                     data=stream.read(MAX_BYTES[name]+1)
+                after=os.fstat(fd)
+                if (after.st_dev!=meta.st_dev or after.st_ino!=meta.st_ino
+                    or after.st_size!=meta.st_size or after.st_mtime_ns!=meta.st_mtime_ns
+                    or after.st_ctime_ns!=meta.st_ctime_ns):
+                    raise IntentError("Release member changed during read")
+                if len(data)!=meta.st_size:
+                    raise IntentError("Release member changed during read")
                 if len(data)>MAX_BYTES[name]:
                     raise IntentError("Release artifact exceeds size limit")
                 return data
