@@ -30,6 +30,22 @@ def verify(spec, dxf_path, tolerance=0.001):
     polygons = root.findall("{http://www.w3.org/2000/svg}polygon")
     if len(polygons) != len(strips):
         raise IntentError("SVG polygon count mismatch")
+    points = [p for poly in strips for p in poly]
+    left, right = min(p[0] for p in points), max(p[0] for p in points)
+    bottom, top = min(p[1] for p in points), max(p[1] for p in points)
+    scale = min(900 / max(right-left, 1), 350 / max(top-bottom, 1))
+    for poly, node in zip(strips, polygons):
+        try:
+            vertices = [tuple(map(float, pair.split(","))) for pair in node.attrib["points"].split()]
+        except (ValueError, KeyError) as exc:
+            raise IntentError("Malformed SVG coordinates") from exc
+        if len(vertices) != len(poly):
+            raise IntentError("SVG vertex count mismatch")
+        for (x,y),(sx,sy) in zip(poly,vertices):
+            if not math.isfinite(sx) or not math.isfinite(sy):
+                raise IntentError("Nonfinite SVG coordinates")
+            if abs(sx-(80+(x-left)*scale)) > tolerance or abs(sy-(300-(y-bottom)*scale)) > tolerance:
+                raise IntentError("SVG coordinate mismatch")
     return {"status":"PASS_2D_GEOMETRY_ONLY","strips":len(strips),"dxf":"PASS","svg":"PASS","architectural_approval":False}
 
 def verify_from_files(spec_path,dxf_path):
