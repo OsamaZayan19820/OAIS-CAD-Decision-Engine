@@ -34,7 +34,7 @@ def test_tampered_report_rejected(tmp_path):
     report=json.loads(path.read_text())
     report["architectural_approval"]=True
     path.write_text(json.dumps(report))
-    with pytest.raises(IntentError,match="approval"):
+    with pytest.raises(IntentError,match="checksum"):
         verify_release(root)
 
 def test_unexpected_file_rejected(tmp_path):
