@@ -10,5 +10,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install -e '.[dev]'
-      - run: python -m pytest -q
+      - name: Install package
+        run: python -m pip install -e '.[dev]'
+      - name: Syntax gate
+        run: python -m compileall -q src tests
+      - name: Regression tests
+        run: python -m pytest -q
+      - name: V0.2 export smoke
+        run: |
+          python -m oais_cad.cli_v02 examples/v02_walls.json build/v02
+          test -s build/v02/layout_v02.dxf
+          test -s build/v02/preview_v02.svg
+          test -s build/v02/report_v02.json
