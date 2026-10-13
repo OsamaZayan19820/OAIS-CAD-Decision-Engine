@@ -2,3 +2,4 @@
 # Mirrors pyproject.toml dependency ranges; local OAIS package is excluded.
 ezdxf>=1.3,<2
 pytest>=8,<10
+tomli>=2,<3; python_version < '3.11'
