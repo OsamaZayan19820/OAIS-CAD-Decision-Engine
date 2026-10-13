@@ -25,3 +25,12 @@ def test_rejects_duplicate_pin():
 
 def test_rejects_invalid_hash():
     assert module.validate("sample==1.2.3 --hash=sha256:abc\n")
+
+def test_rejects_standalone_hash_directive():
+    assert module.validate("--hash=sha256:" + "a" * 64 + "\n")
+
+def test_rejects_hash_continuation_with_invalid_digest():
+    assert module.validate("sample==1.2.3 \\\n    --hash=sha256:abc\n")
+
+def test_rejects_extra_option_in_continuation():
+    assert module.validate("sample==1.2.3 \\\n    --index-url=https://example.invalid/simple\n")
