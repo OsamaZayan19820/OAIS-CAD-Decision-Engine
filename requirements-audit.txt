@@ -1,0 +1,4 @@
+# Third-party direct dependencies for vulnerability auditing.
+# Mirrors pyproject.toml dependency ranges; local OAIS package is excluded.
+ezdxf>=1.3,<2
+pytest>=8,<10
