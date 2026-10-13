@@ -1,4 +1,6 @@
 import pytest
+import json
+import hashlib
 from oais_cad.publish_solids_v02 import publish_solid_plan
 from oais_cad.v02 import IntentError
 
@@ -34,4 +36,7 @@ def test_failure_leaves_no_partial_release(tmp_path):
 def test_completion_marker_matches_report(tmp_path):
     out=tmp_path/"release"
     report=publish_solid_plan(spec([wall("A",(0,0),(1000,0))]),out)
-    assert (out/"_OAIS_COMPLETE").read_text()=="{}".format(report["dxf_sha256"])
+    marker=json.loads((out/"_OAIS_COMPLETE").read_text())
+    assert marker["protocol"]==2
+    assert marker["dxf_sha256"]==report["dxf_sha256"]
+    assert marker["report_sha256"]==hashlib.sha256((out/"wall_solids_report_v02.json").read_bytes()).hexdigest()
