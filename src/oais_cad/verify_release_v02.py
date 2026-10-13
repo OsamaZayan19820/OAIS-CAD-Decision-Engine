@@ -63,6 +63,10 @@ def verify_release(destination):
         report=json.loads(report_bytes.decode("utf-8"))
     except (UnicodeError,ValueError) as exc:
         raise IntentError("Unreadable release") from exc
+    if not isinstance(report,dict) or not isinstance(marker,dict):
+        raise IntentError("Invalid release metadata schema")
+    if set(marker)!={"protocol","dxf_sha256","report_sha256"} or type(marker["protocol"]) is not int:
+        raise IntentError("Invalid release marker schema")
     digest=hashlib.sha256(data).hexdigest()
     if (not isinstance(marker,dict) or marker.get("protocol")!=2
         or marker.get("dxf_sha256")!=digest
