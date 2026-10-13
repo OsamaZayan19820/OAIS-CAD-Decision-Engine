@@ -6,6 +6,7 @@ from pathlib import Path
 from .v02 import IntentError
 
 EXPECTED={"wall_solids_v02.dxf","wall_solids_report_v02.json","_OAIS_COMPLETE"}
+MAX_BYTES={"wall_solids_v02.dxf":32*1024*1024,"wall_solids_report_v02.json":2*1024*1024,"_OAIS_COMPLETE":4096}
 
 def verify_release(destination):
     root=Path(destination)
@@ -14,6 +15,13 @@ def verify_release(destination):
     entries=list(root.iterdir())
     if {p.name for p in entries}!=EXPECTED or any(not p.is_file() or p.is_symlink() for p in entries):
         raise IntentError("Incomplete or unexpected release artifacts")
+    # Refuse oversized artifacts before loading or parsing untrusted content.
+    # These are V0.2 policy limits, not a guarantee against resource exhaustion.
+    try:
+        if any((root/name).stat().st_size>limit for name,limit in MAX_BYTES.items()):
+            raise IntentError("Release artifact exceeds size limit")
+    except OSError as exc:
+        raise IntentError("Unreadable release metadata") from exc
     try:
         marker=json.loads((root/"_OAIS_COMPLETE").read_text(encoding="ascii"))
         report_bytes=(root/"wall_solids_report_v02.json").read_bytes()
