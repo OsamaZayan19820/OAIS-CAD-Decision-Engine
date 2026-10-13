@@ -1,11 +1,10 @@
-"""Fail-closed, directory-level publication of a new solid DXF export.
+"""Fail-closed publication using exclusive directory reservation.
 
-Destination MUST NOT exist. Build and verify in a sibling temporary
-directory, then rename it into place. Existing output is never overwritten.
-Same-filesystem rename is atomic on common local POSIX filesystems;
-network filesystems and concurrent writers require separate coordination.
+Completion marker is written last and binds BOTH DXF and report bytes.
+No crash-durability or distributed-filesystem guarantee is claimed.
 """
 import json
+import hashlib
 import os
 import tempfile
 from pathlib import Path
@@ -44,7 +43,7 @@ def publish_solid_plan(spec, destination):
                     output.flush()
                     os.fsync(output.fileno())
             with (target/"_OAIS_COMPLETE").open("xb") as output:
-                output.write(report["dxf_sha256"].encode("ascii"))
+                output.write(json.dumps({"protocol":2,"dxf_sha256":report["dxf_sha256"],"report_sha256":hashlib.sha256((target/"wall_solids_report_v02.json").read_bytes()).hexdigest()},sort_keys=True).encode("ascii"))
                 output.flush()
                 os.fsync(output.fileno())
             return report
