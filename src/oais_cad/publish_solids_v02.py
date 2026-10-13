@@ -31,7 +31,25 @@ def publish_solid_plan(spec, destination):
             raise IntentError("Staging report mismatch")
         if target.exists() or target.is_symlink():
             raise IntentError("Destination appeared during staging")
-        # This is a single directory publication; it is not an overwrite
-        # primitive and must not be used without external writer locking.
-        os.rename(staged,target)
-        return report
+        # Reserve the final name with exclusive mkdir. Consumers must require
+        # the completion marker; directory existence alone is not publication.
+        try:
+            target.mkdir()
+        except FileExistsError as exc:
+            raise IntentError("Destination reserved by another publisher") from exc
+        try:
+            for name in sorted(expected):
+                with (target/name).open("xb") as output:
+                    output.write((staged/name).read_bytes())
+                    output.flush()
+                    os.fsync(output.fileno())
+            with (target/"_OAIS_COMPLETE").open("xb") as output:
+                output.write(report["dxf_sha256"].encode("ascii"))
+                output.flush()
+                os.fsync(output.fileno())
+            return report
+        except Exception:
+            for name in sorted(expected | {"_OAIS_COMPLETE"}):
+                (target/name).unlink(missing_ok=True)
+            target.rmdir()
+            raise
