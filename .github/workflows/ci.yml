@@ -23,6 +23,7 @@ jobs:
       - name: Installed dependency consistency gate
         run: |
           python -m pip check
+          python scripts/check_installed_constraints.py
           python -m pip freeze --all > installed-dependencies.txt
           python - <<'PY'
           from importlib.metadata import version
