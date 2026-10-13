@@ -22,7 +22,8 @@ def test_in_place_mutation_during_read_is_rejected(tmp_path,monkeypatch):
         def read(self,*args,**kwargs):
             data=self.stream.read(*args,**kwargs)
             if b"SECTION" in data:
-                os.ftruncate(self.stream.fileno(),0)
+                with (root/"wall_solids_v02.dxf").open("r+b") as writer:
+                    writer.truncate(0)
             return data
     def intercepted(fd,*args,**kwargs):
         stream=real_fdopen(fd,*args,**kwargs)
