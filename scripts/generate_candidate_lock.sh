@@ -11,14 +11,12 @@ VENV_PY=".lock-verify-venv/bin/python"
 # Keep audit tooling separate from the locked test environment.
 "$PYTHON" -m pip install 'pip-audit==2.9.0'
 "$PYTHON" -m pip_audit --strict --progress-spinner off -r requirements-locked-candidate.txt
-# Install only this project's source without dependency resolution or build isolation.
-# Its third-party dependencies were already installed from the hash-locked candidate.
-"$VENV_PY" -m pip install --no-deps --no-build-isolation -e .
+# Exercise the local source without introducing unlocked build-backend dependencies.
 "$VENV_PY" -m pip check
 "$VENV_PY" scripts/check_installed_constraints.py
-"$VENV_PY" -m compileall -q src tests
-"$VENV_PY" -m pytest -q
-"$VENV_PY" -m oais_cad.cli_v02 examples/v02_walls.json build/locked-v02
+PYTHONPATH=src "$VENV_PY" -m compileall -q src tests
+PYTHONPATH=src "$VENV_PY" -m pytest -q
+PYTHONPATH=src "$VENV_PY" -m oais_cad.cli_v02 examples/v02_walls.json build/locked-v02
 test -s build/locked-v02/layout_v02.dxf
 test -s build/locked-v02/preview_v02.svg
 test -s build/locked-v02/report_v02.json
