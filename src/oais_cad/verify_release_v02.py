@@ -1,6 +1,9 @@
 """Independent fail-closed reader for published V0.2 solid DXF artifacts."""
 import hashlib
 import json
+import io
+import os
+import stat
 from pathlib import Path
 
 from .v02 import IntentError
@@ -15,19 +18,43 @@ def verify_release(destination):
     entries=list(root.iterdir())
     if {p.name for p in entries}!=EXPECTED or any(not p.is_file() or p.is_symlink() for p in entries):
         raise IntentError("Incomplete or unexpected release artifacts")
-    # Refuse oversized artifacts before loading or parsing untrusted content.
-    # These are V0.2 policy limits, not a guarantee against resource exhaustion.
+    # Open a pinned directory descriptor and each child with O_NOFOLLOW.
+    # Validate size from the opened descriptor, not a prior path stat.
+    # Reject platforms without descriptor-relative no-follow semantics.
+    if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY"):
+        raise IntentError("Secure file opening unsupported on this platform")
     try:
-        if any((root/name).stat().st_size>limit for name,limit in MAX_BYTES.items()):
-            raise IntentError("Release artifact exceeds size limit")
+        root_fd=os.open(root,os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     except OSError as exc:
-        raise IntentError("Unreadable release metadata") from exc
+        raise IntentError("Unsafe release directory") from exc
     try:
-        marker=json.loads((root/"_OAIS_COMPLETE").read_text(encoding="ascii"))
-        report_bytes=(root/"wall_solids_report_v02.json").read_bytes()
+        def read_member(name):
+            try:
+                fd=os.open(name,os.O_RDONLY | os.O_NOFOLLOW | getattr(os,"O_NONBLOCK",0),dir_fd=root_fd)
+            except OSError as exc:
+                raise IntentError("Unsafe release member") from exc
+            try:
+                meta=os.fstat(fd)
+                if not stat.S_ISREG(meta.st_mode) or meta.st_nlink!=1:
+                    raise IntentError("Unsafe release member type")
+                if meta.st_size>MAX_BYTES[name]:
+                    raise IntentError("Release artifact exceeds size limit")
+                with os.fdopen(fd,"rb",closefd=False) as stream:
+                    data=stream.read(MAX_BYTES[name]+1)
+                if len(data)>MAX_BYTES[name]:
+                    raise IntentError("Release artifact exceeds size limit")
+                return data
+            finally:
+                os.close(fd)
+        marker_bytes=read_member("_OAIS_COMPLETE")
+        report_bytes=read_member("wall_solids_report_v02.json")
+        data=read_member("wall_solids_v02.dxf")
+    finally:
+        os.close(root_fd)
+    try:
+        marker=json.loads(marker_bytes.decode("ascii"))
         report=json.loads(report_bytes.decode("utf-8"))
-        data=(root/"wall_solids_v02.dxf").read_bytes()
-    except (UnicodeError,ValueError,OSError) as exc:
+    except (UnicodeError,ValueError) as exc:
         raise IntentError("Unreadable release") from exc
     digest=hashlib.sha256(data).hexdigest()
     if (not isinstance(marker,dict) or marker.get("protocol")!=2
@@ -41,7 +68,7 @@ def verify_release(destination):
         raise IntentError("Invalid strip count")
     import ezdxf
     try:
-        doc=ezdxf.readfile(root/"wall_solids_v02.dxf")
+        doc=ezdxf.read(io.StringIO(data.decode("utf-8")))
         entities=list(doc.modelspace())
     except Exception as exc:
         raise IntentError("DXF cannot be parsed") from exc
