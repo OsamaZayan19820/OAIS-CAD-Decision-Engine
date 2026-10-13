@@ -7,6 +7,7 @@ PYTHON="${PYTHON:-python}"
 RESOLVER_PY=".lock-resolver-venv/bin/python"
 "$RESOLVER_PY" -m pip install 'pip==25.1.1' 'pip-tools==7.5.1'
 "$RESOLVER_PY" -m piptools compile --generate-hashes --resolver=backtracking --output-file requirements-locked-candidate.txt requirements-audit.txt
+"$PYTHON" scripts/check_candidate_lock.py requirements-locked-candidate.txt
 "$PYTHON" -m venv .lock-verify-venv
 VENV_PY=".lock-verify-venv/bin/python"
 "$VENV_PY" -m pip install --require-hashes --only-binary=:all: -r requirements-locked-candidate.txt
