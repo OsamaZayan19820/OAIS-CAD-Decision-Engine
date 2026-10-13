@@ -14,7 +14,7 @@ def validate(text):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        if line.startswith(("--", "-e", "-r", "-c", "git+", "http:", "https:", ".", "/")):
+        if not pending and line.startswith(("--", "-e", "-r", "-c", "git+", "http:", "https:", ".", "/")):
             errors.append(f"line {number}: disallowed directive or direct reference")
             continue
         if pending:
