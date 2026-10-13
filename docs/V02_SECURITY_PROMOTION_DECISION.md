@@ -25,6 +25,13 @@ Decide whether the candidate CAD exporter and release-verification pipeline may 
 - ASSUMPTION: Current dependency resolution remains available and consistent.
 - DATA_VOID: Independent external CAD validation, cryptographic provenance, final committed lock, independent human approval.
 
+## Lock drift protection — pending CI validation
+- A fail-closed SHA-256 comparison now checks generated candidate lock bytes against reviewed, Python-specific baselines (3.10 and 3.11) **before installation**.
+- Added negative tests for modified lock content, unsupported interpreter, and missing file.
+- A mismatch may represent a legitimate upstream resolver/index change; it is a **review trigger**, not automatic evidence of compromise.
+- This does **not** establish signed provenance, publisher authenticity, or human authorization to promote the lock.
+- Latest code must pass CI before this protection can be considered verified.
+
 ## Decision
 **HOLD** for merge/release. **GO** only for isolated branch testing and evidence collection.
 Next action: confirm corrected parser and negative tests on both Python versions; inspect archived candidate locks and compare dependency sets; perform independent CAD checks; request human promotion decision.
