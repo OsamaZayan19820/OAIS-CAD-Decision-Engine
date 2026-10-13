@@ -1,19 +1,19 @@
-# Release status
+# Release readiness
 
-**V0.1 — PILOT / NOT PRODUCTION**
+**Status: PUBLIC PILOT / NOT PRODUCTION.**
 
-The complete Python source, examples, tests and generated DXF/SVG artifacts are available in the prepared V0.1 release archive, but **have not yet been uploaded into this repository**.
+The repository now includes a runnable minimal subset: `src/oais_cad/engine.py`, `src/oais_cad/cli.py`, `tests/test_smoke.py`, an example, packaging metadata and CI.
 
-## Verified locally in the prepared archive
-- 24 unit/regression tests passed.
-- DXF export was parsed back programmatically.
-- Input hash is captured in the decision report.
+The previous 24-test source archive is **not fully replicated here**. Its test result does not establish the status of this GitHub subset.
 
-## Not verified
-- AutoCAD GUI round-trip.
-- Regulatory/building code compliance.
-- End-to-end MCP client interoperability.
-- Benchmarked superiority to other CAD MCP projects.
+### Verification
 
-## Publication gate
-Do not advertise this repository as executable until `pyproject.toml`, `src/`, `tests/`, `examples/`, and `.github/workflows/ci.yml` have been uploaded and CI has passed on GitHub.
+- GitHub file writes: confirmed.
+- GitHub Actions workflow file: committed.
+- GitHub Actions execution: NOT YET VERIFIED.
+- AutoCAD desktop round-trip: DATA VOID.
+- Building-code or structural compliance: NOT EVALUATED.
+- MCP integration: NOT IMPLEMENTED in this subset.
+- Competitor performance comparison: NOT MEASURED.
+
+Release requires a passing CI run, independent DXF inspection, documented scope and a human release decision.
