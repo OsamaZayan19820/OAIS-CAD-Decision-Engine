@@ -4,12 +4,12 @@ from .pdf_reader import read_pdf_evidence
 
 
 def render_evidence_overlay(pdf_path, output_dir, tokens=(), zoom=1.5):
+    if isinstance(zoom, bool) or not isinstance(zoom, (int, float)) or not (0.5 <= zoom <= 4):
+        raise ValueError("zoom outside safe range")
     try:
         import fitz
     except ImportError as exc:
         raise RuntimeError("PyMuPDF required for PDF overlays") from exc
-    if not (0.5 <= zoom <= 4):
-        raise ValueError("zoom outside safe range")
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     evidence = read_pdf_evidence(pdf_path, tokens=tokens)
