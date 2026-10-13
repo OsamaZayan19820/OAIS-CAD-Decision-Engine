@@ -1,6 +1,9 @@
 """Verify that installed direct dependencies satisfy project metadata constraints."""
 import sys
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from packaging.requirements import Requirement
